@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FitTrack — Workout Progress Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ================================================================
+   DESIGN TOKENS — Irvan Design System v2 (Purple Theme)
+   FitTrack — Workout Progress Tracker
+   ================================================================ */
+:root {
+  --white:#ffffff; --gray-50:#fafaf9; --gray-100:#f4f4f2; --gray-200:#e8e7e4;
+  --gray-300:#d2d0cb; --gray-400:#a8a49d; --gray-500:#7c7870; --gray-600:#57534e;
+  --gray-700:#3d3a36; --gray-800:#27241f; --gray-900:#161410;
+  --purple-50:#f6f4ff; --purple-100:#ede8ff; --purple-200:#d9d0ff; --purple-300:#bcacff;
+  --purple-400:#9980ff; --purple-500:#7c5cfc; --purple-600:#6240e0; --purple-700:#4e30b8;
+  --purple-800:#3a2290; --purple-900:#271668;
+  --success:#16a34a; --success-bg:#f0fdf4; --success-border:#86efac;
+  --warning:#d97706; --warning-bg:#fffbeb;
+  --danger:#dc2626; --danger-bg:#fef2f2; --danger-border:#fca5a5;
+  --accent-50:var(--purple-50); --accent-100:var(--purple-100); --accent-200:var(--purple-200);
+  --accent-300:var(--purple-300); --accent-400:var(--purple-400); --accent:var(--purple-500);
+  --accent-h:var(--purple-600); --accent-deep:var(--purple-700);
+  --accent-ring:rgba(124,92,252,0.22); --accent-glow:rgba(124,92,252,0.28);
+  --bg:var(--gray-50); --surface:var(--white); --border:#e8e7e4;
+  --text-primary:#161410; --text-secondary:#3d3a36; --text-muted:#57534e;
+  --text-faint:#7c7870; --text-on-accent:#ffffff;
+  --font-sans:'DM Sans',sans-serif; --font-mono:'DM Mono',monospace;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-2xl:24px; --r-full:9999px;
+  --sh-xs:0 1px 2px rgba(22,20,16,0.05);
+  --sh-sm:0 1px 3px rgba(22,20,16,0.07),0 1px 2px rgba(22,20,16,0.04);
+  --sh-md:0 4px 8px rgba(22,20,16,0.06),0 2px 4px rgba(22,20,16,0.04);
+  --sh-lg:0 8px 20px rgba(22,20,16,0.08),0 4px 8px rgba(22,20,16,0.04);
+  --sh-xl:0 16px 40px rgba(22,20,16,0.10),0 8px 16px rgba(22,20,16,0.05);
+  --sh-focus:0 0 0 3px var(--accent-ring); --sh-accent:0 4px 16px var(--accent-glow);
+  --ease:cubic-bezier(0.4,0,0.2,1); --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --dur-fast:100ms; --dur-base:160ms; --dur-slow:250ms;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text-primary);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font:inherit}
+:focus{outline:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:500;letter-spacing:-.015em;border:none;cursor:pointer;white-space:nowrap;user-select:none;position:relative;overflow:hidden;transition:background var(--dur-base) var(--ease),color var(--dur-base) var(--ease),box-shadow var(--dur-base) var(--ease),transform var(--dur-fast) var(--ease)}
+.btn:focus-visible{box-shadow:var(--sh-focus)}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.99)}
+.btn:disabled{opacity:.38;cursor:not-allowed;pointer-events:none}
+.btn-sm{min-height:34px;padding:0 14px;font-size:.875rem;border-radius:var(--r-sm)}
+.btn-md{min-height:40px;padding:0 20px;font-size:1rem;border-radius:var(--r-md)}
+.btn-lg{min-height:48px;padding:0 24px;font-size:1.0625rem;border-radius:var(--r-md)}
+.btn-full{width:100%}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:var(--sh-sm)}
+.btn-primary:hover:not(:disabled){background:var(--accent-h);box-shadow:var(--sh-accent);transform:translateY(-1px)}
+.btn-secondary{background:var(--accent-100);color:var(--accent-deep)}
+.btn-secondary:hover:not(:disabled){background:var(--accent-200);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--accent-h);border:1.5px solid var(--accent-300)}
+.btn-outline:hover:not(:disabled){background:var(--accent-50);border-color:var(--accent);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover:not(:disabled){background:var(--gray-100);color:var(--text-secondary)}
+.btn-surface{background:#fff;color:var(--text-primary);border:1px solid var(--border);box-shadow:var(--sh-xs)}
+.btn-surface:hover:not(:disabled){border-color:var(--accent-300);box-shadow:var(--sh-md);transform:translateY(-1px)}
+.btn-danger-soft{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.btn-danger-soft:hover:not(:disabled){background:#fee2e2}
+.btn.is-loading{color:transparent!important;pointer-events:none}
+.btn.is-loading::after{content:"";position:absolute;width:1em;height:1em;border:2px solid rgba(255,255,255,.3);border-top-color:rgba(255,255,255,.9);border-radius:50%;animation:_spin .55s linear infinite}
+.btn-secondary.is-loading::after,.btn-outline.is-loading::after{border-color:var(--accent-200);border-top-color:var(--accent)}
+@keyframes _spin{to{transform:rotate(360deg)}}
+
+/* FORM CONTROLS */
+.form-label{display:block;font-size:.875rem;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);padding:10px 14px;font-size:.9375rem;color:var(--text-primary);transition:border-color var(--dur-base),box-shadow var(--dur-base);appearance:none;-webkit-appearance:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:var(--sh-focus);outline:none}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text-faint)}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c7870' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.6}
+.form-group{margin-bottom:18px}
+.form-hint{font-size:.75rem;color:var(--text-faint);margin-top:5px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-error{font-size:.75rem;color:var(--danger);margin-top:4px;display:none}
+.form-error.show{display:block}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--r-full);font-size:.72rem;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.badge-accent{background:var(--accent-100);color:var(--accent-deep)}
+.badge-gray{background:var(--gray-100);color:var(--gray-600)}
+.badge-success{background:var(--success-bg);color:var(--success)}
+.badge-warning{background:var(--warning-bg);color:var(--warning)}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast-item{display:inline-flex;align-items:center;gap:10px;background:var(--gray-800);color:#fff;padding:12px 18px;border-radius:var(--r-lg);font-size:.875rem;font-weight:500;box-shadow:var(--sh-xl);max-width:340px;pointer-events:auto;animation:_toast-in var(--dur-slow) var(--ease-spring)}
+.toast-item.toast-success{background:var(--success)}
+.toast-item.toast-danger{background:var(--danger)}
+.toast-item.toast-warning{background:var(--warning)}
+.toast-item.toast-out{animation:_toast-out var(--dur-slow) var(--ease) forwards}
+@keyframes _toast-in{from{opacity:0;transform:translateX(20px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes _toast-out{to{opacity:0;transform:translateX(20px) scale(.95)}}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)}
+.login-card{width:100%;max-width:400px;background:#fff;border:1px solid var(--border);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);padding:40px 36px;animation:_fade-up .4s var(--ease-spring) both}
+@keyframes _fade-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.login-brand{width:56px;height:56px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 24px;box-shadow:var(--sh-accent)}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:background var(--dur-base),border-color var(--dur-base)}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-dot.error{background:var(--danger);border-color:var(--danger);animation:_shake .3s var(--ease)}
+@keyframes _shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.pin-key{min-height:52px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-lg);font-size:1.125rem;font-weight:600;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background var(--dur-fast),transform var(--dur-fast)}
+.pin-key:hover{background:var(--accent-50);border-color:var(--accent-200);color:var(--accent-deep)}
+.pin-key:active{transform:scale(.94)}
+
+/* APP SHELL */
+#app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;padding:0 20px;gap:12px}
+.topbar-logo{width:34px;height:34px;border-radius:var(--r-md);flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:var(--sh-accent)}
+.topbar-title{font-size:1.0625rem;font-weight:700;letter-spacing:-.02em}
+.topbar-subtitle{font-size:.75rem;color:var(--text-faint);font-weight:400}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);height:64px;display:flex;align-items:stretch;padding:0 8px;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border-radius:var(--r-md);color:var(--text-faint);transition:color var(--dur-base),background var(--dur-base);padding:6px 4px;font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.nav-item:hover{background:var(--accent-50);color:var(--accent-h)}
+.nav-item.active{color:var(--accent)}
+.nav-item.active .nav-icon-wrap{background:var(--accent-100);border-radius:var(--r-md)}
+.nav-icon-wrap{width:32px;height:28px;display:flex;align-items:center;justify-content:center;transition:background var(--dur-base)}
+.nav-icon{font-size:1.125rem;line-height:1}
+.main-content{flex:1;padding:20px 16px 96px;max-width:640px;margin:0 auto;width:100%}
+@media(min-width:768px){.main-content{padding:28px 24px 96px}}
+.page{display:none;animation:_page-in .22s var(--ease) both}
+.page.active{display:block}
+@keyframes _page-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* SIDEBAR DESKTOP */
+@media(min-width:900px){
+  #app{flex-direction:row}
+  .topbar{display:none}
+  .bottom-nav{display:none}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#fff;border-right:1px solid var(--border);display:flex!important;flex-direction:column;z-index:100;padding:24px 12px}
+  .sidebar-brand{display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:24px}
+  .sidebar-logo{width:36px;height:36px;border-radius:var(--r-md);flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;font-size:1.0625rem;box-shadow:var(--sh-accent)}
+  .sidebar-title{font-size:1rem;font-weight:700;letter-spacing:-.02em}
+  .sidebar-nav-items{flex:1;display:flex;flex-direction:column;gap:2px}
+  .sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);font-size:.875rem;color:var(--text-muted);cursor:pointer;min-height:40px;font-weight:500;transition:background var(--dur-fast),color var(--dur-fast)}
+  .sidebar-item:hover{background:var(--accent-50);color:var(--accent-h)}
+  .sidebar-item.active{background:var(--accent-100);color:var(--accent-deep);font-weight:600}
+  .sidebar-item-icon{font-size:1.0625rem;width:20px;text-align:center;flex-shrink:0}
+  .sidebar-footer{padding:12px 8px 0;border-top:1px solid var(--border)}
+  .main-content{margin-left:220px;max-width:720px;padding:32px 32px 48px}
+}
+.sidebar{display:none}
+
+/* SYNC BAR */
+.sync-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r-full);font-size:.8rem;color:var(--text-muted);box-shadow:var(--sh-xs);width:fit-content}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-300)}
+.sync-dot.ok{background:var(--success)}
+.sync-dot.loading{background:var(--accent);animation:_pulse 1s ease infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes _pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:20px}
+.page-title{font-size:1.375rem;font-weight:700;letter-spacing:-.025em}
+.page-subtitle{font-size:.875rem;color:var(--text-muted);margin-top:2px}
+.divider{border:none;border-top:1px solid var(--border)}
+
+/* HOME */
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);padding:14px;box-shadow:var(--sh-xs);transition:box-shadow var(--dur-base),transform var(--dur-base)}
+.stat-card:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
+.stat-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin-bottom:4px}
+.stat-value{font-size:1.5rem;font-weight:700;letter-spacing:-.035em;color:var(--accent);line-height:1.1}
+.stat-sub{font-size:.68rem;color:var(--text-faint);margin-top:2px}
+.skeleton{background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-200) 50%,var(--gray-100) 75%);background-size:200% 100%;border-radius:var(--r-md);animation:_shimmer 1.4s infinite linear}
+@keyframes _shimmer{to{background-position:-200% 0}}
+.view-toggle{display:flex;gap:4px;background:var(--gray-100);padding:3px;border-radius:var(--r-lg);width:fit-content}
+.view-btn{min-height:30px;padding:0 14px;font-size:.8125rem;font-weight:500;color:var(--text-muted);border-radius:var(--r-md);cursor:pointer;border:none;background:transparent;display:flex;align-items:center;gap:5px;transition:background var(--dur-base),color var(--dur-base),box-shadow var(--dur-base)}
+.view-btn:hover{color:var(--text-primary)}
+.view-btn.active{background:#fff;color:var(--accent-deep);box-shadow:var(--sh-sm);font-weight:600}
+.filter-chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:2px 0}
+.filter-chips::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--border);border-radius:var(--r-full);padding:5px 12px;font-size:.8rem;color:var(--text-secondary);cursor:pointer;min-height:32px;white-space:nowrap;flex-shrink:0;transition:background var(--dur-base),border-color var(--dur-base),color var(--dur-base);box-shadow:var(--sh-xs)}
+.chip:hover{border-color:var(--accent-300);color:var(--accent-deep)}
+.chip.active{background:var(--accent-100);border-color:var(--accent-300);color:var(--accent-deep);font-weight:600}
+
+/* RECORD CARDS */
+.record-list{display:flex;flex-direction:column;gap:10px}
+.record-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);padding:14px 16px;box-shadow:var(--sh-xs);transition:box-shadow var(--dur-base),border-color var(--dur-base),transform var(--dur-base)}
+.record-card:hover{box-shadow:var(--sh-md);border-color:var(--accent-200);transform:translateY(-1px)}
+.record-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.record-sport-icon{width:40px;height:40px;border-radius:var(--r-md);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.25rem}
+.record-title{font-size:.9375rem;font-weight:600;color:var(--text-primary);line-height:1.3}
+.record-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.record-date{font-size:.75rem;color:var(--text-faint)}
+.metric-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.metric-pill{display:flex;align-items:center;gap:4px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 9px;font-size:.78rem}
+.metric-pill-icon{font-size:.85rem}
+.metric-pill-val{font-weight:600;color:var(--text-primary)}
+.metric-pill-unit{font-size:.68rem;color:var(--text-faint)}
+.record-note{font-size:.8125rem;color:var(--text-muted);line-height:1.55;padding:8px 12px;background:var(--gray-50);border-radius:var(--r-md);border-left:3px solid var(--accent-200)}
+.rpe-badge{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:var(--r-full)}
+.record-compact{display:flex;flex-direction:column}
+.record-compact-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);transition:background var(--dur-fast)}
+.record-compact-item:last-child{border-bottom:none}
+.record-compact-item:hover{background:var(--accent-50)}
+.compact-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.compact-title{flex:1;font-size:.875rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compact-metric{font-size:.72rem;color:var(--text-muted);white-space:nowrap}
+.compact-date{font-size:.72rem;color:var(--text-faint);white-space:nowrap}
+.empty-state{text-align:center;padding:60px 24px;display:flex;flex-direction:column;align-items:center}
+.empty-icon{width:72px;height:72px;border-radius:var(--r-2xl);background:var(--accent-50);border:1px solid var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 18px}
+.empty-title{font-size:1.0625rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.empty-body{font-size:.875rem;color:var(--text-faint);max-width:260px;line-height:1.6}
+
+/* FORM CATAT LATIHAN */
+.form-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-2xl);box-shadow:var(--sh-md);padding:22px 20px}
+.sport-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sport-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px;background:var(--gray-50);border:1.5px solid var(--border);border-radius:var(--r-lg);cursor:pointer;min-height:72px;transition:all var(--dur-base) var(--ease)}
+.sport-tile:hover{border-color:var(--accent-300);background:var(--accent-50)}
+.sport-tile.selected{background:var(--accent-100);border-color:var(--accent);box-shadow:var(--sh-xs)}
+.sport-tile-icon{font-size:1.5rem;line-height:1}
+.sport-tile-label{font-size:.72rem;font-weight:600;color:var(--text-secondary);text-align:center;line-height:1.3}
+.sport-tile.selected .sport-tile-label{color:var(--accent-deep)}
+.metric-section{background:var(--accent-50);border:1px solid var(--accent-100);border-radius:var(--r-xl);padding:16px;margin-bottom:18px}
+.metric-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);margin-bottom:14px}
+.metric-input-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.unit-badge{height:42px;padding:0 12px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);font-size:.8125rem;font-weight:600;color:var(--text-muted);display:flex;align-items:center;white-space:nowrap}
+.sets-builder{display:flex;flex-direction:column;gap:8px}
+.set-row{display:grid;grid-template-columns:26px 1fr 1fr 1fr 32px;gap:8px;align-items:center;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r-lg)}
+.set-num{font-size:.8125rem;font-weight:700;color:var(--text-faint);text-align:center}
+.set-input{background:var(--gray-50);border:1.5px solid var(--border);border-radius:var(--r-md);padding:6px 8px;font-size:.875rem;text-align:center;color:var(--text-primary);width:100%;transition:border-color var(--dur-base),box-shadow var(--dur-base)}
+.set-input:focus{border-color:var(--accent);box-shadow:var(--sh-focus);outline:none}
+.set-label{font-size:.62rem;font-weight:600;color:var(--text-faint);text-align:center;margin-bottom:2px;text-transform:uppercase}
+.set-delete{width:28px;height:28px;border-radius:var(--r-md);border:none;background:var(--danger-bg);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:background var(--dur-fast)}
+.set-delete:hover{background:#fee2e2}
+.set-col{display:flex;flex-direction:column;gap:2px}
+.rpe-track{width:100%;height:8px;border-radius:4px;margin:8px 0 4px;background:linear-gradient(to right,#a3e635,#fde047,#fb923c,#ef4444);position:relative}
+input[type=range].rpe-slider{width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:8px;cursor:pointer}
+input[type=range].rpe-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);box-shadow:var(--sh-sm);cursor:pointer;transition:border-color var(--dur-base),box-shadow var(--dur-base)}
+input[type=range].rpe-slider:focus::-webkit-slider-thumb{box-shadow:var(--sh-focus)}
+input[type=range].rpe-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);box-shadow:var(--sh-sm);cursor:pointer}
+.rpe-labels{display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-faint)}
+.rpe-current{font-size:1rem;font-weight:700;color:var(--accent);text-align:center;margin-bottom:4px}
+.date-trio{display:grid;grid-template-columns:2fr 2fr 3fr;gap:8px}
+.duration-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.mood-pill{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--r-full);font-size:.8125rem;font-weight:500;color:var(--text-muted);cursor:pointer;background:#fff;min-height:34px;transition:all var(--dur-base) var(--ease)}
+.mood-pill:hover{border-color:var(--accent-300);color:var(--accent-deep);background:var(--accent-50)}
+.mood-pill.selected{background:var(--accent-100);border-color:var(--accent);color:var(--accent-deep);font-weight:600}
+
+/* INSIGHT */
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-2xl);padding:18px 16px;box-shadow:var(--sh-sm);margin-bottom:14px;overflow:hidden}
+.chart-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
+.chart-title{font-size:1rem;font-weight:600;color:var(--text-primary);line-height:1.3}
+.chart-subtitle{font-size:.8rem;color:var(--text-faint);margin-top:2px}
+.chart-wrap canvas{max-height:240px}
+.ins-badge{font-size:.7rem;font-weight:600;padding:3px 8px;background:var(--accent-50);color:var(--accent-deep);border-radius:var(--r-full);white-space:nowrap;flex-shrink:0;margin-top:2px}
+.insight-grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.insight-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);padding:14px;box-shadow:var(--sh-xs)}
+.insight-card-accent{background:linear-gradient(135deg,var(--accent-50),var(--purple-100));border-color:var(--accent-200)}
+.insight-icon{font-size:1.1rem;margin-bottom:4px}
+.insight-num{font-size:1.5rem;font-weight:700;letter-spacing:-.04em;color:var(--accent);line-height:1}
+.insight-label{font-size:.68rem;color:var(--text-faint);font-weight:500;letter-spacing:.025em;text-transform:uppercase;margin-top:3px}
+.insight-row{display:flex;align-items:center;background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);padding:12px 16px;box-shadow:var(--sh-xs);margin-bottom:14px;overflow-x:auto}
+.insight-row::-webkit-scrollbar{display:none}
+.insight-mini{display:flex;flex-direction:column;align-items:center;flex:1;min-width:60px}
+.insight-mini-val{font-size:1.0625rem;font-weight:700;color:var(--accent-deep);letter-spacing:-.03em}
+.insight-mini-label{font-size:.62rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;white-space:nowrap}
+.insight-mini-sep{width:1px;height:30px;background:var(--border);flex-shrink:0;margin:0 4px}
+
+/* HEATMAP */
+.heatmap-card{padding:18px 16px 16px}
+.heatmap-legend-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.heatmap-legend-dots{display:flex;gap:3px}
+.hm-leg-dot{width:11px;height:11px;border-radius:2px}
+.heatmap-outer{overflow-x:auto;padding-bottom:4px}
+.heatmap-outer::-webkit-scrollbar{height:4px}
+.heatmap-outer::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
+.heatmap-month-labels{display:flex;padding-left:28px;margin-bottom:4px;font-size:.65rem;color:var(--text-faint);min-width:max-content;gap:0}
+.hm-month-lbl{flex:none;width:16px}
+.heatmap-body{display:flex;gap:4px;min-width:max-content;align-items:flex-start}
+.heatmap-day-labels{display:grid;grid-template-rows:repeat(7,13px);gap:3px;font-size:.62rem;color:var(--text-faint);width:24px;flex-shrink:0}
+.heatmap-day-labels span{display:flex;align-items:center;height:13px}
+.heatmap-grid{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px}
+.hm-cell{width:13px;height:13px;border-radius:2px;cursor:default;transition:transform .1s,box-shadow .1s;position:relative}
+.hm-cell:hover{transform:scale(1.35);box-shadow:0 0 0 1.5px var(--accent-300);z-index:10}
+.hm-0{background:var(--gray-100);border:1px solid var(--gray-200)}
+.hm-1{background:#d9d0ff}
+.hm-2{background:#bcacff}
+.hm-3{background:#9980ff}
+.hm-4{background:#7c5cfc}
+.hm-5{background:#4e30b8}
+.heatmap-summary{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.hm-sum-item{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--text-muted);background:var(--gray-50);padding:4px 10px;border-radius:var(--r-full);border:1px solid var(--border)}
+.hm-sum-val{font-weight:700;color:var(--accent-deep)}
+
+/* DONUT */
+.donut-layout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut-wrap{position:relative;width:160px;height:160px;flex-shrink:0;margin:0 auto}
+.donut-wrap canvas{width:160px!important;height:160px!important}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.donut-center-num{font-size:1.4rem;font-weight:700;color:var(--accent-deep);letter-spacing:-.04em;line-height:1}
+.donut-center-label{font-size:.68rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em}
+.cat-legend{flex:1;display:flex;flex-direction:column;gap:6px;min-width:140px}
+.cat-leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md)}
+.cat-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cat-leg-name{flex:1;font-size:.8125rem;color:var(--text-secondary)}
+.cat-leg-pct{font-size:.75rem;color:var(--text-faint);margin-right:2px}
+.cat-leg-count{font-size:.8125rem;font-weight:700;color:var(--accent-deep)}
+
+/* TOP LIST */
+.top-bar-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.top-bar-item:last-child{border-bottom:none}
+.top-rank{font-size:.75rem;font-weight:700;color:var(--text-faint);width:18px;text-align:center;flex-shrink:0}
+.top-name{flex:1;font-size:.875rem;color:var(--text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-bar-wrap{width:80px;height:6px;background:var(--gray-100);border-radius:3px;flex-shrink:0;overflow:hidden}
+.top-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .6s var(--ease)}
+.top-count{font-size:.75rem;font-weight:700;color:var(--accent-deep);width:32px;text-align:right}
+
+/* PR */
+.pr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pr-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;box-shadow:var(--sh-xs)}
+.pr-sport{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:6px}
+.pr-val{font-size:1.125rem;font-weight:700;color:var(--accent-deep);letter-spacing:-.03em}
+.pr-meta{font-size:.7rem;color:var(--text-faint);margin-top:2px}
+.pr-icon{font-size:1.1rem;margin-bottom:4px}
+
+/* SETTINGS */
+.settings-section{margin-bottom:22px}
+.settings-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin-bottom:10px}
+.settings-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--sh-xs);margin-bottom:8px}
+.settings-item-left{display:flex;align-items:center;gap:12px}
+.settings-icon{width:36px;height:36px;border-radius:var(--r-md);background:var(--accent-50);border:1px solid var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.settings-name{font-size:.9375rem;font-weight:500}
+.settings-desc{font-size:.75rem;color:var(--text-faint);margin-top:1px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(22,20,16,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:28px 24px;animation:_fade-up .3s var(--ease-spring) both}
+.modal-title{font-size:1.125rem;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:.875rem;color:var(--text-faint);margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">🏋️</div>
+    <h1 style="text-align:center;font-size:1.375rem;font-weight:700;letter-spacing:-.025em">FitTrack</h1>
+    <p style="text-align:center;font-size:.875rem;color:var(--text-faint);margin:6px 0 24px">Masukkan PIN untuk melanjutkan</p>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinClear()" style="font-size:.7rem;color:var(--text-faint)">HAPUS</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" onclick="pinBack()">⌫</button>
+    </div>
+    <p style="text-align:center;margin-top:18px;font-size:.75rem;color:var(--text-faint)">PIN default: <span style="font-family:var(--font-mono);letter-spacing:.1em;color:var(--accent-deep)">1234</span></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+  <!-- Sidebar desktop -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">🏋️</div>
+      <div><div class="sidebar-title">FitTrack</div><div style="font-size:.7rem;color:var(--text-faint)">Workout Tracker</div></div>
+    </div>
+    <div class="sidebar-nav-items">
+      <div class="sidebar-item active" onclick="navigate('home')" id="snav-home"><span class="sidebar-item-icon">📋</span>Riwayat</div>
+      <div class="sidebar-item" onclick="navigate('log')"      id="snav-log"><span class="sidebar-item-icon">➕</span>Catat Latihan</div>
+      <div class="sidebar-item" onclick="navigate('insight')"  id="snav-insight"><span class="sidebar-item-icon">📊</span>Insight</div>
+      <div class="sidebar-item" onclick="navigate('pr')"       id="snav-pr"><span class="sidebar-item-icon">🏆</span>Personal Record</div>
+      <div class="sidebar-item" onclick="navigate('settings')" id="snav-settings"><span class="sidebar-item-icon">⚙️</span>Pengaturan</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sync-bar">
+        <div class="sync-dot" id="sidebar-sync-dot"></div>
+        <span id="sidebar-sync-text" style="font-size:.75rem">Belum sync</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Topbar mobile -->
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;flex:1">
+      <div class="topbar-logo">🏋️</div>
+      <div><div class="topbar-title">FitTrack</div><div class="topbar-subtitle" id="topbar-page-name">Riwayat Latihan</div></div>
+    </div>
+    <div class="sync-bar" style="margin-left:auto">
+      <div class="sync-dot" id="mobile-sync-dot"></div>
+      <span id="mobile-sync-text" style="font-size:.7rem">—</span>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- PAGE: HOME -->
+    <section class="page active" id="page-home">
+      <div class="page-header">
+        <h1 class="page-title">Riwayat Latihan</h1>
+        <p class="page-subtitle" id="today-label">Memuat…</p>
+      </div>
+      <div class="stats-strip" id="stats-strip">
+        <div class="stat-card skeleton" style="height:72px"></div>
+        <div class="stat-card skeleton" style="height:72px"></div>
+        <div class="stat-card skeleton" style="height:72px"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="view-toggle">
+          <button class="view-btn active" id="view-list-btn"    onclick="setView('list')">☰ List</button>
+          <button class="view-btn"        id="view-compact-btn" onclick="setView('compact')">≡ Compact</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="navigate('log')">+ Catat</button>
+      </div>
+      <div class="filter-chips" id="filter-chips" style="margin-bottom:14px"></div>
+      <div id="records-container">
+        <div id="records-skeleton">
+          <div class="skeleton" style="height:100px;margin-bottom:10px;border-radius:18px"></div>
+          <div class="skeleton" style="height:100px;margin-bottom:10px;border-radius:18px"></div>
+          <div class="skeleton" style="height:100px;border-radius:18px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: LOG -->
+    <section class="page" id="page-log">
+      <div class="page-header">
+        <h1 class="page-title">Catat Latihan</h1>
+        <p class="page-subtitle">Tambah sesi olahraga baru</p>
+      </div>
+      <div class="form-card">
+
+        <!-- Jenis Olahraga -->
+        <div class="form-group">
+          <label class="form-label">🏃 Jenis Olahraga <span style="color:var(--danger)">*</span></label>
+          <div class="sport-grid" id="sport-grid"></div>
+          <input type="hidden" id="f-sport">
+          <div class="form-error" id="err-sport">Pilih jenis olahraga</div>
+          <div style="margin-top:10px">
+            <label class="form-label" for="f-sport-custom" style="font-weight:400;color:var(--text-faint)">Atau ketik nama olahraga lain:</label>
+            <input type="text" id="f-sport-custom" class="form-input" placeholder="cth: Bersepeda, Hiking, Voli…" maxlength="40">
+          </div>
+        </div>
+
+        <hr class="divider" style="margin:4px 0 18px">
+
+        <!-- Nama Sesi -->
+        <div class="form-group">
+          <label class="form-label" for="f-judul">📝 Nama Sesi <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="f-judul" class="form-input" placeholder="cth: Push Day, Lari Pagi, 5K Run…" maxlength="80" autocomplete="off">
+          <div class="form-error" id="err-judul">Nama sesi tidak boleh kosong</div>
+        </div>
+
+        <!-- Tanggal -->
+        <div class="form-group">
+          <label class="form-label">📅 Tanggal</label>
+          <div class="date-trio">
+            <select id="f-hari"  class="form-select"></select>
+            <select id="f-bulan" class="form-select"></select>
+            <select id="f-tahun" class="form-select"></select>
+          </div>
+        </div>
+
+        <!-- Durasi -->
+        <div class="form-group">
+          <label class="form-label">⏱️ Durasi</label>
+          <div class="duration-row">
+            <div>
+              <div class="form-hint" style="margin-bottom:5px;margin-top:0">Jam</div>
+              <input type="number" id="f-dur-jam"   class="form-input" min="0" max="23" placeholder="0" style="text-align:center">
+            </div>
+            <div>
+              <div class="form-hint" style="margin-bottom:5px;margin-top:0">Menit</div>
+              <input type="number" id="f-dur-menit" class="form-input" min="0" max="59" placeholder="30" style="text-align:center">
+            </div>
+            <div>
+              <div class="form-hint" style="margin-bottom:5px;margin-top:0">Detik</div>
+              <input type="number" id="f-dur-detik" class="form-input" min="0" max="59" placeholder="0" style="text-align:center">
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" style="margin:4px 0 18px">
+
+        <!-- METRIC SECTIONS (kondisional per sport) -->
+        <div id="ms-jarak" style="display:none" class="metric-section">
+          <div class="metric-section-title">📏 Jarak Tempuh</div>
+          <div class="metric-input-row">
+            <div>
+              <label class="form-label" for="f-jarak">Jarak</label>
+              <input type="number" id="f-jarak" class="form-input" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <select id="f-jarak-unit" class="form-select" style="width:auto;min-width:72px">
+              <option value="km">km</option>
+              <option value="m">m</option>
+              <option value="mi">mi</option>
+            </select>
+          </div>
+          <div style="margin-top:14px">
+            <label class="form-label">Pace rata-rata <span style="font-size:.72rem;color:var(--text-faint)">(opsional)</span></label>
+            <div class="form-row-2">
+              <div>
+                <input type="number" id="f-pace-menit" class="form-input" min="0" max="30" placeholder="5" style="text-align:center">
+                <div class="form-hint" style="text-align:center">menit</div>
+              </div>
+              <div>
+                <input type="number" id="f-pace-detik" class="form-input" min="0" max="59" placeholder="30" style="text-align:center">
+                <div class="form-hint" style="text-align:center">detik / km</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="ms-sets" style="display:none" class="metric-section">
+          <div class="metric-section-title">🔢 Set &amp; Repetisi</div>
+          <div style="display:grid;grid-template-columns:26px 1fr 1fr 1fr 32px;gap:8px;margin-bottom:8px;padding:0 12px">
+            <div></div>
+            <div class="set-label">REPS</div>
+            <div class="set-label">BEBAN (kg)</div>
+            <div class="set-label">VOLUME</div>
+            <div></div>
+          </div>
+          <div class="sets-builder" id="sets-builder"></div>
+          <button type="button" class="btn btn-secondary btn-sm" style="margin-top:10px;width:100%" onclick="addSet()">+ Tambah Set</button>
+        </div>
+
+        <div id="ms-reps-only" style="display:none" class="metric-section">
+          <div class="metric-section-title">🔢 Repetisi</div>
+          <div class="form-row-2">
+            <div>
+              <label class="form-label" for="f-reps">Total reps</label>
+              <input type="number" id="f-reps" class="form-input" min="0" placeholder="0" style="text-align:center">
+            </div>
+            <div>
+              <label class="form-label" for="f-sets-only">Total set</label>
+              <input type="number" id="f-sets-only" class="form-input" min="0" placeholder="0" style="text-align:center">
+            </div>
+          </div>
+        </div>
+
+        <div id="ms-kalori" style="display:none" class="metric-section">
+          <div class="metric-section-title">🔥 Kalori Terbakar</div>
+          <div class="metric-input-row">
+            <div>
+              <label class="form-label" for="f-kalori">Kalori</label>
+              <input type="number" id="f-kalori" class="form-input" min="0" placeholder="0">
+            </div>
+            <div class="unit-badge">kkal</div>
+          </div>
+        </div>
+
+        <div id="ms-elevasi" style="display:none" class="metric-section">
+          <div class="metric-section-title">⛰️ Elevasi</div>
+          <div class="form-row-2">
+            <div>
+              <label class="form-label" for="f-elev-naik">Naik (m)</label>
+              <input type="number" id="f-elev-naik" class="form-input" min="0" placeholder="0">
+            </div>
+            <div>
+              <label class="form-label" for="f-elev-turun">Turun (m)</label>
+              <input type="number" id="f-elev-turun" class="form-input" min="0" placeholder="0">
+            </div>
+          </div>
+        </div>
+
+        <div id="ms-lap" style="display:none" class="metric-section">
+          <div class="metric-section-title">🏊 Lap &amp; Kolam</div>
+          <div class="form-row-2">
+            <div>
+              <label class="form-label" for="f-lap">Jumlah lap</label>
+              <input type="number" id="f-lap" class="form-input" min="0" placeholder="0">
+            </div>
+            <div>
+              <label class="form-label">Panjang kolam</label>
+              <div class="metric-input-row">
+                <select id="f-pool-size" class="form-select"><option value="25">25</option><option value="50">50</option></select>
+                <div class="unit-badge">m</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" style="margin:4px 0 18px">
+
+        <!-- RPE -->
+        <div class="form-group">
+          <label class="form-label">💪 Tingkat Usaha (RPE 1–10)</label>
+          <div class="rpe-current" id="rpe-display">5 — Sedang</div>
+          <div class="rpe-track">
+            <input type="range" class="rpe-slider" id="f-rpe" min="1" max="10" value="5" oninput="updateRpeDisplay(this.value)">
+          </div>
+          <div class="rpe-labels"><span>1 Santai</span><span>5 Sedang</span><span>10 Maksimal</span></div>
+        </div>
+
+        <!-- Mood -->
+        <div class="form-group">
+          <label class="form-label">😊 Perasaan Setelah Latihan</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="mood-pills">
+            <button type="button" class="mood-pill" data-mood="💪 Kuat"  onclick="selectMood(this)">💪 Kuat</button>
+            <button type="button" class="mood-pill" data-mood="🔥 Bakar" onclick="selectMood(this)">🔥 Bakar</button>
+            <button type="button" class="mood-pill" data-mood="😊 Senang" onclick="selectMood(this)">😊 Senang</button>
+            <button type="button" class="mood-pill" data-mood="😤 Puas"  onclick="selectMood(this)">😤 Puas</button>
+            <button type="button" class="mood-pill" data-mood="😴 Lelah" onclick="selectMood(this)">😴 Lelah</button>
+            <button type="button" class="mood-pill" data-mood="🤕 Nyeri" onclick="selectMood(this)">🤕 Nyeri</button>
+          </div>
+          <input type="hidden" id="f-mood">
+        </div>
+
+        <!-- Catatan -->
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="f-catatan">📝 Catatan Tambahan</label>
+          <textarea id="f-catatan" class="form-textarea" placeholder="Kondisi tubuh, PR baru, program latihan, hal yang mau diperbaiki…" maxlength="600"></textarea>
+          <div class="form-hint"><span id="note-count">0</span>/600</div>
+        </div>
+
+        <hr class="divider" style="margin:20px 0">
+        <button class="btn btn-primary btn-lg btn-full" id="save-btn" onclick="saveRecord()">💾 Simpan Latihan</button>
+      </div>
+    </section>
+
+    <!-- PAGE: INSIGHT -->
+    <section class="page" id="page-insight">
+      <div class="page-header">
+        <h1 class="page-title">Insight &amp; Analitik</h1>
+        <p class="page-subtitle">Statistik performa latihanmu</p>
+      </div>
+      <div class="insight-grid4">
+        <div class="insight-card insight-card-accent">
+          <div class="insight-icon">🏋️</div><div class="insight-num" id="ins-total">—</div><div class="insight-label">Total Sesi</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">📅</div><div class="insight-num" id="ins-bulan">—</div><div class="insight-label">Bulan Ini</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">🔥</div><div class="insight-num" id="ins-streak">—</div><div class="insight-label">Hari Beruntun</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon">⏱️</div><div class="insight-num" id="ins-durasi">—</div><div class="insight-label">Total Jam</div>
+        </div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-mini"><span class="insight-mini-val" id="ins-week">—</span><span class="insight-mini-label">minggu ini</span></div>
+        <div class="insight-mini-sep"></div>
+        <div class="insight-mini"><span class="insight-mini-val" id="ins-avg-week">—</span><span class="insight-mini-label">rata-rata/minggu</span></div>
+        <div class="insight-mini-sep"></div>
+        <div class="insight-mini"><span class="insight-mini-val" id="ins-longest">—</span><span class="insight-mini-label">streak terpanjang</span></div>
+        <div class="insight-mini-sep"></div>
+        <div class="insight-mini"><span class="insight-mini-val" id="ins-rpe-avg">—</span><span class="insight-mini-label">rata-rata RPE</span></div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="chart-card heatmap-card">
+        <div class="chart-card-header">
+          <div><div class="chart-title">Konsistensi Latihan</div><div class="chart-subtitle" id="heatmap-subtitle">365 hari terakhir</div></div>
+          <div class="heatmap-legend-wrap">
+            <span style="font-size:.7rem;color:var(--text-faint)">Jarang</span>
+            <div class="heatmap-legend-dots">
+              <div class="hm-leg-dot" style="background:var(--gray-100);border:1px solid var(--gray-200)"></div>
+              <div class="hm-leg-dot" style="background:#d9d0ff"></div>
+              <div class="hm-leg-dot" style="background:#9980ff"></div>
+              <div class="hm-leg-dot" style="background:#7c5cfc"></div>
+              <div class="hm-leg-dot" style="background:#4e30b8"></div>
+            </div>
+            <span style="font-size:.7rem;color:var(--text-faint)">Sering</span>
+          </div>
+        </div>
+        <div class="heatmap-outer">
+          <div class="heatmap-month-labels" id="heatmap-months"></div>
+          <div class="heatmap-body">
+            <div class="heatmap-day-labels">
+              <span>Sen</span><span></span><span>Rab</span><span></span><span>Jum</span><span></span><span>Min</span>
+            </div>
+            <div class="heatmap-grid" id="heatmap-grid"></div>
+          </div>
+        </div>
+        <div class="heatmap-summary" id="heatmap-summary"></div>
+      </div>
+
+      <!-- Bar 12 bulan -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div><div class="chart-title">Frekuensi Bulanan</div><div class="chart-subtitle">12 bulan terakhir</div></div>
+          <div id="bar-peak-badge" class="ins-badge"></div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
+      </div>
+
+      <!-- Donut distribusi sport -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Distribusi Jenis Olahraga</div><div class="chart-subtitle">Persentase per tipe latihan</div></div></div>
+        <div class="donut-layout">
+          <div class="donut-wrap">
+            <canvas id="chart-donut"></canvas>
+            <div class="donut-center"><div class="donut-center-num" id="donut-total">—</div><div class="donut-center-label">sesi</div></div>
+          </div>
+          <div class="cat-legend" id="sport-legend"></div>
+        </div>
+      </div>
+
+      <!-- Line durasi 30 hari -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Tren Durasi Latihan</div><div class="chart-subtitle">Menit per sesi, 30 hari terakhir</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-line-durasi"></canvas></div>
+      </div>
+
+      <!-- Weekday bar -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Pola Hari Aktif</div><div class="chart-subtitle">Distribusi latihan per hari dalam seminggu</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-weekday"></canvas></div>
+      </div>
+
+      <!-- Radar -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Radar Keseimbangan Olahraga</div><div class="chart-subtitle">Keberagaman jenis latihan</div></div></div>
+        <div class="chart-wrap" style="display:flex;justify-content:center">
+          <canvas id="chart-radar" style="max-width:280px;max-height:280px"></canvas>
+        </div>
+      </div>
+
+      <!-- RPE trend -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Tren Intensitas (RPE)</div><div class="chart-subtitle">Rata-rata RPE per hari, 30 hari terakhir</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-rpe"></canvas></div>
+      </div>
+
+      <!-- Top sport -->
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-title">Olahraga Terfavorit</div><div class="chart-subtitle">Berdasarkan frekuensi sesi</div></div></div>
+        <div id="top-sport-list"></div>
+      </div>
+    </section>
+
+    <!-- PAGE: PR -->
+    <section class="page" id="page-pr">
+      <div class="page-header">
+        <h1 class="page-title">Personal Record</h1>
+        <p class="page-subtitle">Pencapaian terbaikmu</p>
+      </div>
+      <div id="pr-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏆</div>
+        <div class="empty-title">Belum ada PR</div>
+        <div class="empty-body">Mulai catat latihan dan PR akan muncul otomatis dari data terbaikmu.</div>
+        <button class="btn btn-primary btn-md" style="margin-top:18px" onclick="navigate('log')">+ Catat Latihan</button>
+      </div>
+      <div class="chart-card" id="pr-jarak-card" style="display:none">
+        <div class="chart-card-header"><div><div class="chart-title">🏃 Jarak Terbaik</div><div class="chart-subtitle">Per jenis olahraga berbasis jarak</div></div></div>
+        <div class="pr-grid" id="pr-jarak-grid"></div>
+      </div>
+      <div class="chart-card" id="pr-durasi-card" style="display:none">
+        <div class="chart-card-header"><div><div class="chart-title">⏱️ Sesi Terlama</div><div class="chart-subtitle">Durasi latihan terpanjang per olahraga</div></div></div>
+        <div class="pr-grid" id="pr-durasi-grid"></div>
+      </div>
+      <div class="chart-card" id="pr-beban-card" style="display:none">
+        <div class="chart-card-header"><div><div class="chart-title">⚖️ Volume Beban Terbesar</div><div class="chart-subtitle">Beban × reps tertinggi</div></div></div>
+        <div class="pr-grid" id="pr-beban-grid"></div>
+      </div>
+      <div class="chart-card" id="pr-rpe-card" style="display:none">
+        <div class="chart-card-header"><div><div class="chart-title">💪 Sesi Paling Intens</div><div class="chart-subtitle">RPE tertinggi yang pernah dicatat</div></div></div>
+        <div id="pr-rpe-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div><div class="chart-title">📌 PR Manual</div><div class="chart-subtitle">Pencapaian yang dicatat sendiri</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openPrModal()">+ Tambah</button>
+        </div>
+        <div id="manual-pr-list"><div style="color:var(--text-faint);font-size:.875rem;padding:12px 0;text-align:center">Belum ada PR manual</div></div>
+      </div>
+    </section>
+
+    <!-- PAGE: SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Pengaturan</h1>
+        <p class="page-subtitle">Konfigurasi aplikasi</p>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">🔗 Google Sheets</div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">🔗</div>
+            <div><div class="settings-name">URL Apps Script</div><div class="settings-desc">Web App URL dari deployment GAS</div></div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="editGasUrl()">Edit</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon" id="conn-icon">⚪</div>
+            <div><div class="settings-name">Status Koneksi</div><div class="settings-desc" id="conn-status-desc">Belum dikonfigurasi</div></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="testConnection()">Tes</button>
+        </div>
+        <div id="gas-url-editor" style="display:none;margin-top:8px">
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Apps Script Web App URL</label>
+            <input type="url" id="gas-url-input" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveGasUrl()">Simpan</button>
+            <button class="btn btn-ghost btn-sm"   onclick="cancelGasUrl()">Batal</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">🔐 Keamanan</div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">🔑</div>
+            <div><div class="settings-name">Ubah PIN</div><div class="settings-desc">PIN 4 digit untuk login</div></div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="changePinFlow()">Ubah</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">⚙️ Preferensi</div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">⚖️</div>
+            <div><div class="settings-name">Satuan Berat</div><div class="settings-desc" id="pref-berat-desc">kg (kilogram)</div></div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="toggleBeratUnit()">Ganti</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">📏</div>
+            <div><div class="settings-name">Satuan Jarak</div><div class="settings-desc" id="pref-jarak-desc">km (kilometer)</div></div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="toggleJarakUnit()">Ganti</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">🗄️ Data</div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">🔄</div>
+            <div><div class="settings-name">Sync Manual</div><div class="settings-desc">Ambil ulang data dari Sheets</div></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="sync-btn" onclick="syncData()">Sync</button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">🗑️</div>
+            <div><div class="settings-name">Hapus Cache</div><div class="settings-desc">Data dimuat ulang dari Sheets saat reload</div></div>
+          </div>
+          <button class="btn btn-danger-soft btn-sm" onclick="clearCache()">Hapus</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">ℹ️ Tentang</div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">🏋️</div>
+            <div><div class="settings-name">FitTrack v1.0</div><div class="settings-desc">Workout Tracker · Google Sheets Backend</div></div>
+          </div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left"><div class="settings-icon">👤</div>
+            <div><div class="settings-name">Dibuat oleh</div><div class="settings-desc">Irvan · Irvan Design System v2</div></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full" style="color:var(--danger)" onclick="logout()">🚪 Logout</button>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home"     onclick="navigate('home')"><div class="nav-icon-wrap"><span class="nav-icon">📋</span></div>Riwayat</div>
+    <div class="nav-item"        id="nav-log"      onclick="navigate('log')"><div class="nav-icon-wrap"><span class="nav-icon">➕</span></div>Catat</div>
+    <div class="nav-item"        id="nav-insight"  onclick="navigate('insight')"><div class="nav-icon-wrap"><span class="nav-icon">📊</span></div>Insight</div>
+    <div class="nav-item"        id="nav-pr"       onclick="navigate('pr')"><div class="nav-icon-wrap"><span class="nav-icon">🏆</span></div>PR</div>
+    <div class="nav-item"        id="nav-settings" onclick="navigate('settings')"><div class="nav-icon-wrap"><span class="nav-icon">⚙️</span></div>Atur</div>
+  </nav>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Modal PR Manual -->
+<div class="modal-overlay" id="pr-modal">
+  <div class="modal-box">
+    <div class="modal-title">🏆 Tambah PR Manual</div>
+    <div class="modal-sub">Catat pencapaian yang tidak masuk otomatis</div>
+    <div class="form-group"><label class="form-label">Jenis Pencapaian</label>
+      <input type="text" id="pr-m-jenis" class="form-input" placeholder="cth: Deadlift 1RM, Handstand, Half Marathon…"></div>
+    <div class="form-group"><label class="form-label">Nilai / Catatan</label>
+      <input type="text" id="pr-m-nilai" class="form-input" placeholder="cth: 100 kg, 30 detik, 2:01:45…"></div>
+    <div class="form-group" style="margin-bottom:0"><label class="form-label">Tanggal</label>
+      <input type="date" id="pr-m-tgl" class="form-input"></div>
+    <hr class="divider" style="margin:18px 0">
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary btn-md" style="flex:1" onclick="savePrManual()">Simpan PR</button>
+      <button class="btn btn-ghost btn-md"   style="flex:1" onclick="closePrModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ganti PIN -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-title" id="pin-modal-title" style="text-align:center">Verifikasi PIN Lama</div>
+    <div class="modal-sub"   id="pin-modal-sub"   style="text-align:center">Masukkan PIN saat ini</div>
+    <div class="pin-dots" id="modal-pin-dots">
+      <div class="pin-dot" id="modal-dot-0"></div><div class="pin-dot" id="modal-dot-1"></div>
+      <div class="pin-dot" id="modal-dot-2"></div><div class="pin-dot" id="modal-dot-3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="modalPinPress('1')">1</button>
+      <button class="pin-key" onclick="modalPinPress('2')">2</button>
+      <button class="pin-key" onclick="modalPinPress('3')">3</button>
+      <button class="pin-key" onclick="modalPinPress('4')">4</button>
+      <button class="pin-key" onclick="modalPinPress('5')">5</button>
+      <button class="pin-key" onclick="modalPinPress('6')">6</button>
+      <button class="pin-key" onclick="modalPinPress('7')">7</button>
+      <button class="pin-key" onclick="modalPinPress('8')">8</button>
+      <button class="pin-key" onclick="modalPinPress('9')">9</button>
+      <button class="pin-key" onclick="modalPinClear()" style="font-size:.7rem;color:var(--text-faint)">HAPUS</button>
+      <button class="pin-key" onclick="modalPinPress('0')">0</button>
+      <button class="pin-key" onclick="modalPinBack()">⌫</button>
+    </div>
+    <button class="btn btn-ghost btn-full btn-sm" style="margin-top:14px" onclick="closePinModal()">Batal</button>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   KONFIGURASI
+   ================================================================ */
+const SPORTS = [
+  {id:'lari',        label:'Lari',          icon:'🏃', color:'#7c5cfc', metrics:['jarak','kalori']},
+  {id:'gym',         label:'Gym/Strength',  icon:'🏋️', color:'#4e30b8', metrics:['sets','kalori']},
+  {id:'renang',      label:'Renang',        icon:'🏊', color:'#6240e0', metrics:['lap','jarak','kalori']},
+  {id:'sepeda',      label:'Sepeda',        icon:'🚴', color:'#9980ff', metrics:['jarak','elevasi','kalori']},
+  {id:'yoga',        label:'Yoga/Pilates',  icon:'🧘', color:'#bcacff', metrics:['kalori']},
+  {id:'hiit',        label:'HIIT/Cardio',   icon:'⚡', color:'#6240e0', metrics:['kalori','reps_only']},
+  {id:'hiking',      label:'Hiking',        icon:'🥾', color:'#4e30b8', metrics:['jarak','elevasi','kalori']},
+  {id:'basket',      label:'Basket',        icon:'🏀', color:'#7c5cfc', metrics:['kalori']},
+  {id:'futsal',      label:'Futsal/Bola',   icon:'⚽', color:'#9980ff', metrics:['kalori']},
+  {id:'tinju',       label:'Tinju/MMA',     icon:'🥊', color:'#4e30b8', metrics:['kalori']},
+  {id:'calisthenics',label:'Calisthenics',  icon:'🤸', color:'#6240e0', metrics:['reps_only','kalori']},
+  {id:'lainnya',     label:'Lainnya',       icon:'🏅', color:'#a8a49d', metrics:['kalori']},
+];
+
+const METRIC_SECTIONS = {
+  jarak:'ms-jarak', sets:'ms-sets', reps_only:'ms-reps-only',
+  kalori:'ms-kalori', elevasi:'ms-elevasi', lap:'ms-lap',
+};
+
+const RPE_LABELS = {
+  1:'Sangat Ringan',2:'Ringan',3:'Cukup Ringan',4:'Sedikit Usaha',
+  5:'Sedang',6:'Agak Berat',7:'Berat',8:'Sangat Berat',
+  9:'Hampir Maksimal',10:'Maksimal'
+};
+
+const state = {
+  records:[], filtered:[], viewMode:'list', activeFilter:'all',
+  loading:true, gasUrl:'', syncStatus:'idle', currentPage:'home',
+  charts:{}, prefs:{berat:'kg',jarak:'km'}, sets:[], manualPRs:[],
+};
+
+/* ================================================================
+   INIT
+   ================================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  state.gasUrl = localStorage.getItem('ft_gas_url')||'';
+  try{ const p=localStorage.getItem('ft_prefs'); if(p) state.prefs={...state.prefs,...JSON.parse(p)}; }catch(_){}
+  try{ const m=localStorage.getItem('ft_manual_prs'); if(m) state.manualPRs=JSON.parse(m); }catch(_){}
+  buildSportGrid();
+  buildFilterChips();
+  initDateSelectors();
+  initSets();
+  document.getElementById('f-catatan').addEventListener('input',function(){ document.getElementById('note-count').textContent=this.value.length; });
+  document.getElementById('pr-m-tgl').value=new Date().toISOString().split('T')[0];
+  updatePrefUI();
+  updateTodayLabel();
+  if(sessionStorage.getItem('ft_session')==='ok') showApp();
+});
+
+/* ================================================================
+   AUTH
+   ================================================================ */
+let pinBuffer='';
+function pinPress(d){ if(pinBuffer.length>=4)return; pinBuffer+=d; updatePinDots('dot',pinBuffer.length); if(pinBuffer.length===4)setTimeout(checkPin,120); }
+function pinBack(){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots('dot',pinBuffer.length); }
+function pinClear(){ pinBuffer=''; updatePinDots('dot',0); }
+function updatePinDots(pfx,filled){ for(let i=0;i<4;i++){ const d=document.getElementById(`${pfx}-${i}`); d.classList.toggle('filled',i<filled); d.classList.remove('error'); } }
+function checkPin(){
+  if(pinBuffer===(localStorage.getItem('ft_pin')||'1234')){
+    sessionStorage.setItem('ft_session','ok');
+    const ls=document.getElementById('login-screen'); ls.style.transition='opacity .3s ease'; ls.style.opacity='0';
+    setTimeout(()=>showApp(),300);
+  } else {
+    for(let i=0;i<4;i++) document.getElementById(`dot-${i}`).classList.add('error');
+    setTimeout(()=>{ pinClear(); for(let i=0;i<4;i++) document.getElementById(`dot-${i}`).classList.remove('error'); },600);
+  }
+}
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  const app=document.getElementById('app'); app.style.display='flex'; app.style.opacity='0'; app.style.transition='opacity .35s ease';
+  setTimeout(()=>{ app.style.opacity='1'; },50);
+  loadData();
+}
+function logout(){ sessionStorage.removeItem('ft_session'); location.reload(); }
+
+/* ================================================================
+   NAVIGASI
+   ================================================================ */
+const PAGE_NAMES={home:'Riwayat Latihan',log:'Catat Latihan',insight:'Insight',pr:'Personal Record',settings:'Pengaturan'};
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`page-${page}`)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`nav-${page}`)?.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`snav-${page}`)?.classList.add('active');
+  document.getElementById('topbar-page-name').textContent=PAGE_NAMES[page]||'';
+  state.currentPage=page;
+  if(page==='insight') renderInsightCharts();
+  if(page==='pr') renderPRPage();
+  if(page==='log') resetForm();
+}
+
+/* ================================================================
+   DATA — GOOGLE APPS SCRIPT
+   ================================================================ */
+async function loadData(){
+  setSyncStatus('loading'); state.loading=true;
+  const cached=localStorage.getItem('ft_records_cache');
+  if(cached){ try{ state.records=JSON.parse(cached); renderHome(); }catch(_){} }
+  if(!state.gasUrl){ state.loading=false; setSyncStatus('idle'); renderHome(); return; }
+  try{
+    const res=await fetch(`${state.gasUrl}?action=get&t=${Date.now()}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+    if(json.status==='ok'&&Array.isArray(json.data)){
+      state.records=json.data.reverse();
+      localStorage.setItem('ft_records_cache',JSON.stringify(state.records));
+      setSyncStatus('ok'); showToast('✅ Data berhasil dimuat','success');
+    } else throw new Error(json.message||'Response tidak valid');
+  } catch(err){ setSyncStatus('error'); if(!cached) showToast(`⚠️ ${err.message}`,'danger'); }
+  finally{ state.loading=false; renderHome(); }
+}
+
+async function saveRecord(){
+  const sport=document.getElementById('f-sport').value||document.getElementById('f-sport-custom').value.trim();
+  const judul=document.getElementById('f-judul').value.trim();
+  let valid=true;
+  if(!sport){ document.getElementById('err-sport').classList.add('show'); valid=false; } else document.getElementById('err-sport').classList.remove('show');
+  if(!judul){ document.getElementById('err-judul').classList.add('show'); valid=false; } else document.getElementById('err-judul').classList.remove('show');
+  if(!valid){ showToast('⚠️ Lengkapi data yang wajib','danger'); return; }
+  if(!state.gasUrl){ showToast('⚠️ URL Apps Script belum dikonfigurasi','danger'); return; }
+
+  const h=document.getElementById('f-hari').value, b=document.getElementById('f-bulan').value, t=document.getElementById('f-tahun').value;
+  const tanggal=`${t}-${String(b).padStart(2,'0')}-${String(h).padStart(2,'0')}`;
+  const durasi=(parseInt(document.getElementById('f-dur-jam').value)||0)*3600+(parseInt(document.getElementById('f-dur-menit').value)||0)*60+(parseInt(document.getElementById('f-dur-detik').value)||0);
+
+  const sportObj=SPORTS.find(s=>s.id===sport);
+  const activeMs=sportObj?sportObj.metrics:[];
+  const metrics={};
+
+  if(activeMs.includes('jarak')){ const v=parseFloat(document.getElementById('f-jarak').value); if(v){ metrics.jarak=v; metrics.jarak_unit=document.getElementById('f-jarak-unit').value; } const pm=parseInt(document.getElementById('f-pace-menit').value)||0, ps=parseInt(document.getElementById('f-pace-detik').value)||0; if(pm||ps) metrics.pace=`${pm}:${String(ps).padStart(2,'0')}`; }
+  if(activeMs.includes('sets')){ metrics.sets_data=state.sets.filter(s=>s&&(s.reps||s.beban)).map(s=>({reps:s.reps,beban:s.beban})); metrics.total_sets=metrics.sets_data.length; metrics.total_volume=metrics.sets_data.reduce((a,s)=>a+(parseFloat(s.reps)||0)*(parseFloat(s.beban)||0),0); }
+  if(activeMs.includes('reps_only')){ const r=parseInt(document.getElementById('f-reps').value)||0,s=parseInt(document.getElementById('f-sets-only').value)||0; if(r){ metrics.reps=r; metrics.sets_count=s; } }
+  if(activeMs.includes('kalori')){ const k=parseInt(document.getElementById('f-kalori').value)||0; if(k) metrics.kalori=k; }
+  if(activeMs.includes('elevasi')){ const en=parseInt(document.getElementById('f-elev-naik').value)||0,et=parseInt(document.getElementById('f-elev-turun').value)||0; if(en||et){ metrics.elev_naik=en; metrics.elev_turun=et; } }
+  if(activeMs.includes('lap')){ const lp=parseInt(document.getElementById('f-lap').value)||0; if(lp){ metrics.lap=lp; metrics.pool_size=document.getElementById('f-pool-size').value; } }
+
+  const payload={ sport, judul, tanggal, durasi, rpe:parseInt(document.getElementById('f-rpe').value)||5, mood:document.getElementById('f-mood').value, catatan:document.getElementById('f-catatan').value.trim(), metrics:JSON.stringify(metrics) };
+  const btn=document.getElementById('save-btn'); btn.classList.add('is-loading'); btn.disabled=true;
+  try{
+    const res=await fetch(state.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+    if(json.status!=='ok') throw new Error(json.message||'Gagal');
+    showToast('🎉 Latihan berhasil disimpan!','success');
+    state.records.unshift({id:json.id||Date.now().toString(),...payload,metrics});
+    localStorage.setItem('ft_records_cache',JSON.stringify(state.records));
+    setTimeout(()=>navigate('home'),700);
+  } catch(err){ showToast(`❌ ${err.message}`,'danger'); }
+  finally{ btn.classList.remove('is-loading'); btn.disabled=false; }
+}
+
+async function syncData(){ const btn=document.getElementById('sync-btn'); btn.classList.add('is-loading'); btn.disabled=true; localStorage.removeItem('ft_records_cache'); await loadData(); btn.classList.remove('is-loading'); btn.disabled=false; }
+
+/* ================================================================
+   FORM
+   ================================================================ */
+function buildSportGrid(){
+  document.getElementById('sport-grid').innerHTML=SPORTS.map(s=>`
+    <div class="sport-tile" data-sport="${s.id}" onclick="selectSport('${s.id}')">
+      <div class="sport-tile-icon">${s.icon}</div>
+      <div class="sport-tile-label">${s.label}</div>
+    </div>`).join('');
+}
+
+function selectSport(id){
+  document.getElementById('f-sport').value=id;
+  document.getElementById('f-sport-custom').value='';
+  document.querySelectorAll('.sport-tile').forEach(t=>t.classList.toggle('selected',t.dataset.sport===id));
+  document.getElementById('err-sport').classList.remove('show');
+  const sport=SPORTS.find(s=>s.id===id);
+  const shown=new Set();
+  Object.values(METRIC_SECTIONS).forEach(sid=>{ const el=document.getElementById(sid); if(el) el.style.display='none'; });
+  if(sport) sport.metrics.forEach(m=>{ const sid=METRIC_SECTIONS[m]; if(sid&&!shown.has(sid)){ document.getElementById(sid).style.display='block'; shown.add(sid); } });
+}
+
+function initSets(){ state.sets=[]; document.getElementById('sets-builder').innerHTML=''; addSet(); }
+function addSet(){
+  const idx=state.sets.length; state.sets.push({reps:'',beban:''});
+  const row=document.createElement('div'); row.className='set-row'; row.id=`set-row-${idx}`;
+  row.innerHTML=`
+    <div class="set-num">${idx+1}</div>
+    <div class="set-col">
+      <input class="set-input" type="number" min="0" placeholder="0" oninput="state.sets[${idx}].reps=this.value">
+    </div>
+    <div class="set-col">
+      <input class="set-input" type="number" min="0" step="0.5" placeholder="0" oninput="state.sets[${idx}].beban=this.value">
+    </div>
+    <div class="set-col">
+      <div class="set-input" id="set-vol-${idx}" style="background:var(--gray-50);color:var(--text-faint);font-size:.78rem;padding:6px 4px">—</div>
+    </div>
+    <button class="set-delete" onclick="removeSet(${idx})" title="Hapus">✕</button>`;
+  row.querySelectorAll('.set-input[type=number]').forEach(inp=>inp.addEventListener('input',()=>{
+    const r=parseFloat(state.sets[idx]?.reps)||0, b=parseFloat(state.sets[idx]?.beban)||0;
+    const el=document.getElementById(`set-vol-${idx}`); if(el) el.textContent=r&&b?`${(r*b).toFixed(0)}`:'—';
+  }));
+  document.getElementById('sets-builder').appendChild(row);
+}
+function removeSet(idx){ const el=document.getElementById(`set-row-${idx}`); if(el) el.remove(); state.sets[idx]=null; }
+function selectMood(el){ document.querySelectorAll('.mood-pill').forEach(p=>p.classList.remove('selected')); el.classList.add('selected'); document.getElementById('f-mood').value=el.dataset.mood; }
+function updateRpeDisplay(val){ document.getElementById('rpe-display').textContent=`${val} — ${RPE_LABELS[val]||''}`; }
+
+function initDateSelectors(){
+  const today=new Date();
+  const hE=document.getElementById('f-hari'), bE=document.getElementById('f-bulan'), tE=document.getElementById('f-tahun');
+  hE.innerHTML=''; bE.innerHTML=''; tE.innerHTML='';
+  for(let i=1;i<=31;i++) hE.innerHTML+=`<option value="${i}"${i===today.getDate()?' selected':''}>${String(i).padStart(2,'0')}</option>`;
+  ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].forEach((n,i)=>{ bE.innerHTML+=`<option value="${i+1}"${i===today.getMonth()?' selected':''}>${n}</option>`; });
+  for(let y=today.getFullYear()+1;y>=today.getFullYear()-3;y--) tE.innerHTML+=`<option value="${y}"${y===today.getFullYear()?' selected':''}>${y}</option>`;
+}
+
+function resetForm(){
+  ['f-sport','f-sport-custom','f-judul','f-catatan','f-mood','f-dur-jam','f-dur-menit','f-dur-detik'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('note-count').textContent='0';
+  document.getElementById('f-rpe').value=5; updateRpeDisplay(5);
+  document.querySelectorAll('.sport-tile').forEach(t=>t.classList.remove('selected'));
+  document.querySelectorAll('.mood-pill').forEach(p=>p.classList.remove('selected'));
+  document.querySelectorAll('.form-error').forEach(e=>e.classList.remove('show'));
+  Object.values(METRIC_SECTIONS).forEach(sid=>{ const el=document.getElementById(sid); if(el) el.style.display='none'; });
+  initDateSelectors(); initSets();
+}
+
+/* ================================================================
+   RENDER HOME
+   ================================================================ */
+function renderHome(){ renderStats(); applyFilter(state.activeFilter); }
+
+function renderStats(){
+  const now=new Date(), total=state.records.length;
+  const thisMon=state.records.filter(r=>sameMonth(new Date(r.tanggal),now)).length;
+  const totalMin=state.records.reduce((a,r)=>a+Math.round((parseInt(r.durasi)||0)/60),0);
+  document.getElementById('stats-strip').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Sesi</div><div class="stat-value">${total}</div><div class="stat-sub">semua waktu</div></div>
+    <div class="stat-card"><div class="stat-label">Bulan Ini</div><div class="stat-value">${thisMon}</div><div class="stat-sub">${now.toLocaleString('id-ID',{month:'short'})}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Waktu</div><div class="stat-value">${totalMin>=60?Math.round(totalMin/60)+'j':totalMin+'m'}</div><div class="stat-sub">latihan</div></div>`;
+}
+
+function buildFilterChips(){
+  document.getElementById('filter-chips').innerHTML=`<button class="chip active" data-cat="all" onclick="filterBy('all')">🔍 Semua</button>`+
+    SPORTS.map(s=>`<button class="chip" data-cat="${s.id}" onclick="filterBy('${s.id}')">${s.icon} ${s.label}</button>`).join('');
+}
+
+function filterBy(cat){ state.activeFilter=cat; document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.cat===cat)); state.filtered=cat==='all'?state.records:state.records.filter(r=>r.sport===cat); renderRecords(); }
+function applyFilter(cat){ filterBy(cat); }
+function setView(mode){ state.viewMode=mode; document.getElementById('view-list-btn').classList.toggle('active',mode==='list'); document.getElementById('view-compact-btn').classList.toggle('active',mode==='compact'); renderRecords(); }
+
+function renderRecords(){
+  const container=document.getElementById('records-container'), data=state.filtered;
+  if(state.loading&&data.length===0) return;
+  if(!data.length){
+    const sp=SPORTS.find(s=>s.id===state.activeFilter);
+    container.innerHTML=`<div class="empty-state"><div class="empty-icon">🏋️</div><div class="empty-title">Belum ada sesi latihan</div><div class="empty-body">${state.activeFilter==='all'?'Mulai catat sesi olahraga pertamamu!':'Belum ada sesi '+(sp?.label||state.activeFilter)+'.'}</div><button class="btn btn-primary btn-md" style="margin-top:18px" onclick="navigate('log')">➕ Catat Latihan</button></div>`;
+    return;
+  }
+  if(state.viewMode==='list'){ container.innerHTML=`<div class="record-list">${data.map(recordCardHTML).join('')}</div>`; }
+  else { container.innerHTML=`<div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh-sm)"><div class="record-compact">${data.map(compactRowHTML).join('')}</div></div>`; }
+}
+
+function recordCardHTML(r){
+  const sport=SPORTS.find(s=>s.id===r.sport)||{icon:'🏅',label:r.sport||'Olahraga',color:'#a8a49d'};
+  const metrics=typeof r.metrics==='string'?tryJSON(r.metrics):(r.metrics||{});
+  const durMin=Math.round((parseInt(r.durasi)||0)/60);
+  const rpe=parseInt(r.rpe)||0;
+  const rpeColor=rpe>=8?'#dc2626':rpe>=6?'#d97706':'#16a34a';
+  const rpeBg=rpe>=8?'#fef2f2':rpe>=6?'#fffbeb':'#f0fdf4';
+  let mp='';
+  if(durMin>0) mp+=`<div class="metric-pill"><span class="metric-pill-icon">⏱️</span><span class="metric-pill-val">${durMin}</span><span class="metric-pill-unit">min</span></div>`;
+  if(metrics.jarak) mp+=`<div class="metric-pill"><span class="metric-pill-icon">📏</span><span class="metric-pill-val">${metrics.jarak}</span><span class="metric-pill-unit">${metrics.jarak_unit||'km'}</span></div>`;
+  if(metrics.pace) mp+=`<div class="metric-pill"><span class="metric-pill-icon">⚡</span><span class="metric-pill-val">${metrics.pace}</span><span class="metric-pill-unit">/km</span></div>`;
+  if(metrics.total_sets) mp+=`<div class="metric-pill"><span class="metric-pill-icon">🔢</span><span class="metric-pill-val">${metrics.total_sets}</span><span class="metric-pill-unit">set</span></div>`;
+  if(metrics.total_volume) mp+=`<div class="metric-pill"><span class="metric-pill-icon">⚖️</span><span class="metric-pill-val">${Math.round(metrics.total_volume)}</span><span class="metric-pill-unit">vol</span></div>`;
+  if(metrics.reps) mp+=`<div class="metric-pill"><span class="metric-pill-icon">🔄</span><span class="metric-pill-val">${metrics.reps}</span><span class="metric-pill-unit">reps</span></div>`;
+  if(metrics.kalori) mp+=`<div class="metric-pill"><span class="metric-pill-icon">🔥</span><span class="metric-pill-val">${metrics.kalori}</span><span class="metric-pill-unit">kkal</span></div>`;
+  if(metrics.lap) mp+=`<div class="metric-pill"><span class="metric-pill-icon">🏊</span><span class="metric-pill-val">${metrics.lap}</span><span class="metric-pill-unit">lap</span></div>`;
+  if(metrics.elev_naik) mp+=`<div class="metric-pill"><span class="metric-pill-icon">⛰️</span><span class="metric-pill-val">↑${metrics.elev_naik}m</span></div>`;
+  let setsPreview='';
+  if(metrics.sets_data?.length){
+    setsPreview=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">`+
+      metrics.sets_data.slice(0,4).map((s,i)=>`<div style="font-size:.72rem;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md);padding:3px 8px;white-space:nowrap">S${i+1}: <b>${s.reps||0}</b>×${s.beban?`<b>${s.beban}</b>kg`:''}</div>`).join('')+
+      (metrics.sets_data.length>4?`<div style="font-size:.72rem;color:var(--text-faint);padding:3px 8px">+${metrics.sets_data.length-4} lagi</div>`:'')+`</div>`;
+  }
+  return `<div class="record-card">
+    <div class="record-header">
+      <div class="record-sport-icon" style="background:${sport.color}18">${sport.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="record-title">${escHtml(r.judul)}</div>
+        <div class="record-meta">
+          <span class="badge badge-accent" style="font-size:.68rem">${sport.icon} ${sport.label}</span>
+          ${rpe?`<span class="rpe-badge" style="background:${rpeBg};color:${rpeColor}">RPE ${rpe}</span>`:''}
+          ${r.mood?`<span style="font-size:.8rem">${escHtml(r.mood)}</span>`:''}
+          <span class="record-date">📅 ${formatDate(r.tanggal)}</span>
+        </div>
+      </div>
+    </div>
+    ${mp?`<div class="metric-pills">${mp}</div>`:''}
+    ${setsPreview}
+    ${r.catatan?`<div class="record-note">${escHtml(r.catatan)}</div>`:''}
+  </div>`;
+}
+
+function compactRowHTML(r){
+  const sport=SPORTS.find(s=>s.id===r.sport)||{icon:'🏅',color:'#a8a49d'};
+  const metrics=typeof r.metrics==='string'?tryJSON(r.metrics):(r.metrics||{});
+  const durMin=Math.round((parseInt(r.durasi)||0)/60);
+  let mStr=''; if(durMin) mStr+=`⏱${durMin}m `; if(metrics.jarak) mStr+=`📏${metrics.jarak}${metrics.jarak_unit||'km'} `; if(metrics.kalori) mStr+=`🔥${metrics.kalori} `;
+  return `<div class="record-compact-item">
+    <div class="compact-dot" style="background:${sport.color}"></div>
+    <span class="compact-title">${sport.icon} ${escHtml(r.judul)}</span>
+    <span class="compact-metric">${mStr.trim()}</span>
+    <span class="compact-date">${formatDateShort(r.tanggal)}</span>
+  </div>`;
+}
+
+/* ================================================================
+   RENDER INSIGHT
+   ================================================================ */
+function renderInsightCharts(){
+  if(state.currentPage!=='insight') return;
+  const records=state.records, now=new Date();
+  document.getElementById('ins-total').textContent=records.length;
+  document.getElementById('ins-bulan').textContent=records.filter(r=>sameMonth(new Date(r.tanggal),now)).length;
+  document.getElementById('ins-streak').textContent=calcCurrentStreak(records);
+  document.getElementById('ins-durasi').textContent=Math.round(records.reduce((a,r)=>a+(parseInt(r.durasi)||0),0)/3600)+'j';
+  const ws=weekStart();
+  document.getElementById('ins-week').textContent=records.filter(r=>new Date(r.tanggal+'T00:00:00')>=ws).length;
+  document.getElementById('ins-avg-week').textContent=(records.filter(r=>(now-new Date(r.tanggal+'T00:00:00'))/604800000<=4).length/4).toFixed(1);
+  document.getElementById('ins-longest').textContent=calcLongestStreak(records);
+  const rpeVals=records.map(r=>parseInt(r.rpe)).filter(v=>v>0);
+  document.getElementById('ins-rpe-avg').textContent=rpeVals.length?(rpeVals.reduce((a,b)=>a+b,0)/rpeVals.length).toFixed(1):'—';
+  renderHeatmap(records); renderBarChart12(records); renderDonutSport(records);
+  renderLineDurasi(records); renderWeekdayChart(records); renderRadarChart(records);
+  renderRPETrend(records); renderTopSport(records);
+}
+
+function renderHeatmap(records){
+  const grid=document.getElementById('heatmap-grid'), monthLabels=document.getElementById('heatmap-months'), summary=document.getElementById('heatmap-summary');
+  const dateCount={}; records.forEach(r=>{ if(r.tanggal) dateCount[r.tanggal]=(dateCount[r.tanggal]||0)+1; });
+  const today=new Date(); today.setHours(0,0,0,0);
+  const startDate=new Date(today); startDate.setDate(today.getDate()-364);
+  const dow=startDate.getDay()||7; startDate.setDate(startDate.getDate()-(dow-1));
+  const weeks=[]; const cur=new Date(startDate);
+  while(cur<=today){ const week=[]; for(let d=0;d<7;d++){ const iso=toISO(cur); week.push({iso,count:dateCount[iso]||0,isFuture:cur>today,date:new Date(cur)}); cur.setDate(cur.getDate()+1); } weeks.push(week); }
+  const maxC=Math.max(1,...Object.values(dateCount));
+  function ic(c,f){ if(f||c===0)return'hm-0'; const r=c/maxC; return r<=.2?'hm-1':r<=.4?'hm-2':r<=.6?'hm-3':r<=.8?'hm-4':'hm-5'; }
+  grid.innerHTML='';
+  weeks.forEach(wk=>wk.forEach(cell=>{ const el=document.createElement('div'); el.className=`hm-cell ${ic(cell.count,cell.isFuture)}`; el.title=cell.isFuture?'':(cell.count===0?`Istirahat · ${fmtD(cell.date)}`:`${cell.count} sesi · ${fmtD(cell.date)}`); grid.appendChild(el); }));
+  monthLabels.innerHTML=''; let lastM=-1;
+  weeks.forEach(wk=>{ const m=wk[0].date.getMonth(); const lbl=document.createElement('div'); lbl.className='hm-month-lbl'; lbl.style.width='16px'; if(m!==lastM){ lbl.textContent=wk[0].date.toLocaleString('id-ID',{month:'short'}); lastM=m; } monthLabels.appendChild(lbl); });
+  const totalDays=Object.keys(dateCount).filter(d=>d>=toISO(startDate)&&d<=toISO(today)).length;
+  const totalSes=Object.entries(dateCount).filter(([d])=>d>=toISO(startDate)&&d<=toISO(today)).reduce((s,[,v])=>s+v,0);
+  const maxDay=Object.entries(dateCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('heatmap-subtitle').textContent=`${totalDays} hari aktif dari 365 hari terakhir`;
+  summary.innerHTML=`<div class="hm-sum-item">📅 <span><span class="hm-sum-val">${totalDays}</span> hari aktif</span></div><div class="hm-sum-item">🏋️ <span><span class="hm-sum-val">${totalSes}</span> sesi tahun ini</span></div>${maxDay?`<div class="hm-sum-item">🔥 <span>Terbanyak: <span class="hm-sum-val">${maxDay[1]}×</span> · ${fmtD(new Date(maxDay[0]+'T00:00:00'))}</span></div>`:''}`;
+}
+
+function renderBarChart12(records){
+  const ctx=document.getElementById('chart-bar').getContext('2d'), now=new Date(), months=[], counts=[];
+  for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toLocaleString('id-ID',{month:'short',year:'2-digit'})); counts.push(records.filter(r=>sameMonth(new Date(r.tanggal),d)).length); }
+  const peak=Math.max(...counts,0), pi=counts.lastIndexOf(peak);
+  document.getElementById('bar-peak-badge').textContent=peak>0?`🏆 ${months[pi]} terbanyak`:'';
+  if(state.charts.bar) state.charts.bar.destroy();
+  state.charts.bar=new Chart(ctx,{type:'bar',data:{labels:months,datasets:[{label:'Sesi',data:counts,backgroundColor:counts.map((_,i)=>i===pi&&peak>0?'#7c5cfc':'rgba(124,92,252,0.18)'),borderColor:counts.map((_,i)=>i===pi&&peak>0?'#4e30b8':'#9980ff'),borderWidth:2,borderRadius:7,borderSkipped:false,hoverBackgroundColor:'rgba(124,92,252,0.45)'}]},options:{responsive:true,maintainAspectRatio:true,scales:{y:{beginAtZero:true,ticks:{precision:0,color:'#7c7870',font:{family:'DM Sans',size:11}},grid:{color:'rgba(22,20,16,.05)'}},x:{ticks:{color:'#7c7870',font:{family:'DM Sans',size:10}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} sesi`}}}}});
+}
+
+function renderDonutSport(records){
+  const canvas=document.getElementById('chart-donut'), counts={};
+  records.forEach(r=>{ counts[r.sport||'lainnya']=(counts[r.sport||'lainnya']||0)+1; });
+  const sports=SPORTS.filter(s=>counts[s.id]);
+  if(state.charts.donut) state.charts.donut.destroy();
+  document.getElementById('donut-total').textContent=records.length||'—';
+  if(!sports.length){ document.getElementById('sport-legend').innerHTML=`<div style="color:var(--text-faint);font-size:.875rem;text-align:center;padding:16px">Belum ada data</div>`; return; }
+  state.charts.donut=new Chart(canvas.getContext('2d'),{type:'doughnut',data:{labels:sports.map(s=>`${s.icon} ${s.label}`),datasets:[{data:sports.map(s=>counts[s.id]||0),backgroundColor:sports.map(s=>s.color),borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/records.length*100)}%)`}}},cutout:'64%'}});
+  document.getElementById('sport-legend').innerHTML=sports.map(s=>{ const pct=Math.round((counts[s.id]||0)/records.length*100); return `<div class="cat-leg-item"><div class="cat-leg-dot" style="background:${s.color}"></div><div class="cat-leg-name">${s.icon} ${s.label}</div><div class="cat-leg-pct">${pct}%</div><div class="cat-leg-count">${counts[s.id]}</div></div>`; }).join('');
+}
+
+function renderLineDurasi(records){
+  const ctx=document.getElementById('chart-line-durasi').getContext('2d'), now=new Date();
+  const last30=[]; for(let i=29;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); last30.push(toISO(d)); }
+  const byDate={}; records.forEach(r=>{ if(r.tanggal){ byDate[r.tanggal]=(byDate[r.tanggal]||0)+(parseInt(r.durasi)||0); } });
+  const labels=last30.map(d=>{ const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'}); });
+  const data=last30.map(d=>Math.round((byDate[d]||0)/60));
+  if(state.charts.lineDurasi) state.charts.lineDurasi.destroy();
+  state.charts.lineDurasi=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Menit',data,borderColor:'#7c5cfc',backgroundColor:'rgba(124,92,252,0.07)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#7c5cfc',pointHoverRadius:5,tension:.35,fill:true}]},options:{responsive:true,maintainAspectRatio:true,scales:{y:{beginAtZero:true,ticks:{precision:0,color:'#7c7870',font:{family:'DM Sans',size:10}},grid:{color:'rgba(22,20,16,.05)'}},x:{ticks:{maxTicksLimit:8,color:'#7c7870',font:{family:'DM Sans',size:9}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} menit`}}}}});
+}
+
+function renderWeekdayChart(records){
+  const ctx=document.getElementById('chart-weekday').getContext('2d');
+  const days=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'], counts=new Array(7).fill(0);
+  records.forEach(r=>{ if(!r.tanggal)return; counts[(new Date(r.tanggal+'T00:00:00').getDay()+6)%7]++; });
+  const peak=Math.max(...counts,1);
+  if(state.charts.weekday) state.charts.weekday.destroy();
+  state.charts.weekday=new Chart(ctx,{type:'bar',data:{labels:days,datasets:[{label:'Sesi',data:counts,backgroundColor:counts.map(v=>`rgba(124,92,252,${.12+.7*(v/peak)})`),borderColor:counts.map(v=>v===peak?'#4e30b8':'#bcacff'),borderWidth:1.5,borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:true,scales:{y:{beginAtZero:true,ticks:{precision:0,color:'#7c7870',font:{family:'DM Sans',size:10}},grid:{color:'rgba(22,20,16,.05)'}},x:{ticks:{color:'#7c7870',font:{family:'DM Sans',size:11}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} sesi`}}}}});
+}
+
+function renderRadarChart(records){
+  const ctx=document.getElementById('chart-radar').getContext('2d'), counts={};
+  SPORTS.forEach(s=>{ counts[s.id]=0; }); records.forEach(r=>{ if(counts[r.sport]!==undefined) counts[r.sport]++; });
+  if(state.charts.radar) state.charts.radar.destroy();
+  state.charts.radar=new Chart(ctx,{type:'radar',data:{labels:SPORTS.map(s=>`${s.icon} ${s.label}`),datasets:[{label:'Sesi',data:SPORTS.map(s=>counts[s.id]),backgroundColor:'rgba(124,92,252,0.15)',borderColor:'#7c5cfc',pointBackgroundColor:'#7c5cfc',pointBorderColor:'#fff',pointHoverBackgroundColor:'#4e30b8',borderWidth:2,pointRadius:4,pointHoverRadius:6}]},options:{responsive:false,maintainAspectRatio:false,scales:{r:{beginAtZero:true,ticks:{precision:0,display:false},grid:{color:'rgba(22,20,16,.07)'},angleLines:{color:'rgba(22,20,16,.07)'},pointLabels:{font:{family:'DM Sans',size:9},color:'#57534e'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} sesi`}}}}});
+}
+
+function renderRPETrend(records){
+  const ctx=document.getElementById('chart-rpe').getContext('2d'), now=new Date();
+  const last30=[]; for(let i=29;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); last30.push(toISO(d)); }
+  const byDate={}; records.forEach(r=>{ if(r.tanggal&&parseInt(r.rpe)>0){ if(!byDate[r.tanggal]) byDate[r.tanggal]=[]; byDate[r.tanggal].push(parseInt(r.rpe)); } });
+  const data=last30.map(d=>{ const v=byDate[d]; return v?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null; });
+  const labels=last30.map(d=>new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'}));
+  if(state.charts.rpe) state.charts.rpe.destroy();
+  state.charts.rpe=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'RPE',data,borderColor:'#6240e0',backgroundColor:'rgba(98,64,224,0.07)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6240e0',pointHoverRadius:5,tension:.3,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:true,scales:{y:{min:0,max:10,ticks:{stepSize:2,color:'#7c7870',font:{family:'DM Sans',size:10}},grid:{color:'rgba(22,20,16,.05)'}},x:{ticks:{maxTicksLimit:8,color:'#7c7870',font:{family:'DM Sans',size:9}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` RPE ${ctx.raw}`}}}}});
+}
+
+function renderTopSport(records){
+  if(!records.length){ document.getElementById('top-sport-list').innerHTML=`<div style="color:var(--text-faint);font-size:.875rem;padding:12px 0;text-align:center">Belum ada data</div>`; return; }
+  const counts={}; records.forEach(r=>{ const k=r.sport||'lainnya'; counts[k]=(counts[k]||0)+1; });
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6), max=sorted[0][1];
+  document.getElementById('top-sport-list').innerHTML=sorted.map(([id,count],i)=>{ const s=SPORTS.find(sp=>sp.id===id)||{icon:'🏅',label:id}; return `<div class="top-bar-item"><div class="top-rank">${i+1}</div><div class="top-name">${s.icon} ${s.label}</div><div class="top-bar-wrap"><div class="top-bar-fill" style="width:${Math.round(count/max*100)}%"></div></div><div class="top-count">${count}×</div></div>`; }).join('');
+}
+
+/* ================================================================
+   RENDER PR
+   ================================================================ */
+function renderPRPage(){
+  const records=state.records;
+  const jarakByS={}, durasiByS={}, bebanByS={};
+  records.forEach(r=>{
+    const m=typeof r.metrics==='string'?tryJSON(r.metrics):(r.metrics||{});
+    if(m.jarak){ const jKm=m.jarak_unit==='m'?m.jarak/1000:m.jarak_unit==='mi'?m.jarak*1.60934:parseFloat(m.jarak); if(!jarakByS[r.sport]||jKm>jarakByS[r.sport].val) jarakByS[r.sport]={val:jKm,tanggal:r.tanggal,judul:r.judul}; }
+    const dur=parseInt(r.durasi)||0; if(dur){ if(!durasiByS[r.sport]||dur>durasiByS[r.sport].val) durasiByS[r.sport]={val:dur,tanggal:r.tanggal,judul:r.judul}; }
+    if(m.total_volume){ if(!bebanByS[r.sport]||m.total_volume>bebanByS[r.sport].val) bebanByS[r.sport]={val:m.total_volume,tanggal:r.tanggal,judul:r.judul}; }
+  });
+  const topRPE=records.filter(r=>parseInt(r.rpe)>=8).sort((a,b)=>parseInt(b.rpe)-parseInt(a.rpe)).slice(0,4);
+  const hasJ=Object.keys(jarakByS).length>0, hasD=Object.keys(durasiByS).length>0, hasB=Object.keys(bebanByS).length>0, hasR=topRPE.length>0;
+  document.getElementById('pr-empty').style.display=(hasJ||hasD||hasB||hasR)?'none':'flex';
+  document.getElementById('pr-jarak-card').style.display=hasJ?'block':'none';
+  if(hasJ) document.getElementById('pr-jarak-grid').innerHTML=Object.entries(jarakByS).map(([sid,pr])=>{ const s=SPORTS.find(sp=>sp.id===sid)||{icon:'🏅',label:sid}; return `<div class="pr-card"><div class="pr-icon">${s.icon}</div><div class="pr-sport">${s.label}</div><div class="pr-val">${pr.val.toFixed(2)} km</div><div class="pr-meta">${escHtml(pr.judul)} · ${formatDate(pr.tanggal)}</div></div>`; }).join('');
+  document.getElementById('pr-durasi-card').style.display=hasD?'block':'none';
+  if(hasD) document.getElementById('pr-durasi-grid').innerHTML=Object.entries(durasiByS).map(([sid,pr])=>{ const s=SPORTS.find(sp=>sp.id===sid)||{icon:'🏅',label:sid}; return `<div class="pr-card"><div class="pr-icon">${s.icon}</div><div class="pr-sport">${s.label}</div><div class="pr-val">${Math.round(pr.val/60)} menit</div><div class="pr-meta">${escHtml(pr.judul)} · ${formatDate(pr.tanggal)}</div></div>`; }).join('');
+  document.getElementById('pr-beban-card').style.display=hasB?'block':'none';
+  if(hasB) document.getElementById('pr-beban-grid').innerHTML=Object.entries(bebanByS).map(([sid,pr])=>{ const s=SPORTS.find(sp=>sp.id===sid)||{icon:'🏅',label:sid}; return `<div class="pr-card"><div class="pr-icon">${s.icon}</div><div class="pr-sport">${s.label}</div><div class="pr-val">${Math.round(pr.val)} vol</div><div class="pr-meta">${escHtml(pr.judul)} · ${formatDate(pr.tanggal)}</div></div>`; }).join('');
+  document.getElementById('pr-rpe-card').style.display=hasR?'block':'none';
+  if(hasR) document.getElementById('pr-rpe-list').innerHTML=topRPE.map(r=>{ const s=SPORTS.find(sp=>sp.id===r.sport)||{icon:'🏅'}; const rpe=parseInt(r.rpe); return `<div class="top-bar-item"><div style="font-size:1.1rem;width:28px;text-align:center">${s.icon}</div><div class="top-name">${escHtml(r.judul)}</div><div class="top-bar-wrap"><div class="top-bar-fill" style="width:${Math.round(rpe/10*100)}%;background:#dc2626"></div></div><div class="top-count" style="color:#dc2626">RPE ${rpe}</div></div>`; }).join('');
+  renderManualPRs();
+}
+
+function renderManualPRs(){
+  const list=document.getElementById('manual-pr-list');
+  if(!state.manualPRs.length){ list.innerHTML=`<div style="color:var(--text-faint);font-size:.875rem;padding:12px 0;text-align:center">Belum ada PR manual</div>`; return; }
+  list.innerHTML=state.manualPRs.map((pr,i)=>`<div class="top-bar-item"><div class="top-rank">🥇</div><div style="flex:1;min-width:0"><div class="top-name">${escHtml(pr.jenis)}</div><div style="font-size:.72rem;color:var(--text-faint);margin-top:1px">${escHtml(pr.nilai)} · ${formatDate(pr.tanggal)}</div></div><button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:0 8px;min-height:32px" onclick="deletePrManual(${i})">✕</button></div>`).join('');
+}
+
+function openPrModal(){ document.getElementById('pr-modal').classList.add('open'); document.getElementById('pr-m-jenis').focus(); }
+function closePrModal(){ document.getElementById('pr-modal').classList.remove('open'); }
+function savePrManual(){
+  const jenis=document.getElementById('pr-m-jenis').value.trim(), nilai=document.getElementById('pr-m-nilai').value.trim(), tgl=document.getElementById('pr-m-tgl').value;
+  if(!jenis||!nilai){ showToast('⚠️ Lengkapi jenis dan nilai PR','danger'); return; }
+  state.manualPRs.unshift({jenis,nilai,tanggal:tgl});
+  localStorage.setItem('ft_manual_prs',JSON.stringify(state.manualPRs));
+  closePrModal(); showToast('🏆 PR berhasil dicatat!','success'); renderManualPRs();
+  document.getElementById('pr-m-jenis').value=''; document.getElementById('pr-m-nilai').value='';
+}
+function deletePrManual(i){ state.manualPRs.splice(i,1); localStorage.setItem('ft_manual_prs',JSON.stringify(state.manualPRs)); renderManualPRs(); }
+
+/* ================================================================
+   SETTINGS
+   ================================================================ */
+function editGasUrl(){ const ed=document.getElementById('gas-url-editor'); ed.style.display=ed.style.display==='none'?'block':'none'; if(ed.style.display==='block'){ document.getElementById('gas-url-input').value=state.gasUrl; document.getElementById('gas-url-input').focus(); } }
+function cancelGasUrl(){ document.getElementById('gas-url-editor').style.display='none'; }
+function saveGasUrl(){ const url=document.getElementById('gas-url-input').value.trim(); if(!url){ showToast('⚠️ URL tidak boleh kosong','danger'); return; } state.gasUrl=url; localStorage.setItem('ft_gas_url',url); document.getElementById('gas-url-editor').style.display='none'; showToast('✅ URL disimpan','success'); }
+async function testConnection(){ const url=document.getElementById('gas-url-input').value.trim()||state.gasUrl; if(!url){ showToast('⚠️ Isi URL terlebih dahulu','danger'); return; } try{ const res=await fetch(`${url}?action=ping&t=${Date.now()}`); const json=await res.json(); if(json.status==='ok'){ document.getElementById('conn-status-desc').textContent='✅ Terhubung'; document.getElementById('conn-icon').textContent='🟢'; showToast('✅ Koneksi berhasil!','success'); } else throw new Error(json.message); } catch(err){ document.getElementById('conn-status-desc').textContent='❌ Gagal'; document.getElementById('conn-icon').textContent='🔴'; showToast(`❌ ${err.message}`,'danger'); } }
+function clearCache(){ if(!confirm('Hapus cache lokal?')) return; localStorage.removeItem('ft_records_cache'); state.records=[]; renderHome(); showToast('🗑️ Cache dihapus','success'); }
+function toggleBeratUnit(){ state.prefs.berat=state.prefs.berat==='kg'?'lbs':'kg'; localStorage.setItem('ft_prefs',JSON.stringify(state.prefs)); updatePrefUI(); }
+function toggleJarakUnit(){ state.prefs.jarak=state.prefs.jarak==='km'?'mi':'km'; localStorage.setItem('ft_prefs',JSON.stringify(state.prefs)); updatePrefUI(); }
+function updatePrefUI(){ document.getElementById('pref-berat-desc').textContent=state.prefs.berat==='kg'?'kg (kilogram)':'lbs (pound)'; document.getElementById('pref-jarak-desc').textContent=state.prefs.jarak==='km'?'km (kilometer)':'mi (miles)'; }
+
+/* GANTI PIN */
+let pinModalStep='verify', pinModalBuffer='', newPinTemp='';
+function changePinFlow(){ pinModalStep='verify'; pinModalBuffer=''; document.getElementById('pin-modal-title').textContent='Verifikasi PIN Lama'; document.getElementById('pin-modal-sub').textContent='Masukkan PIN saat ini'; updateMDots(0); document.getElementById('pin-modal').classList.add('open'); }
+function closePinModal(){ document.getElementById('pin-modal').classList.remove('open'); pinModalBuffer=''; newPinTemp=''; }
+function modalPinPress(d){ if(pinModalBuffer.length>=4)return; pinModalBuffer+=d; updateMDots(pinModalBuffer.length); if(pinModalBuffer.length===4) setTimeout(processModalPin,120); }
+function modalPinBack(){ pinModalBuffer=pinModalBuffer.slice(0,-1); updateMDots(pinModalBuffer.length); }
+function modalPinClear(){ pinModalBuffer=''; updateMDots(0); }
+function updateMDots(f){ for(let i=0;i<4;i++){ const d=document.getElementById(`modal-dot-${i}`); d.classList.toggle('filled',i<f); d.classList.remove('error'); } }
+function processModalPin(){
+  const saved=localStorage.getItem('ft_pin')||'1234';
+  if(pinModalStep==='verify'){ if(pinModalBuffer===saved){ pinModalStep='new'; pinModalBuffer=''; document.getElementById('pin-modal-title').textContent='PIN Baru'; document.getElementById('pin-modal-sub').textContent='Masukkan 4 digit PIN baru'; updateMDots(0); } else shakeMDots(); }
+  else if(pinModalStep==='new'){ newPinTemp=pinModalBuffer; pinModalStep='confirm'; pinModalBuffer=''; document.getElementById('pin-modal-title').textContent='Konfirmasi PIN Baru'; document.getElementById('pin-modal-sub').textContent='Masukkan ulang PIN baru'; updateMDots(0); }
+  else { if(pinModalBuffer===newPinTemp){ localStorage.setItem('ft_pin',newPinTemp); closePinModal(); showToast('✅ PIN berhasil diubah!','success'); } else { shakeMDots(); pinModalBuffer=''; pinModalStep='new'; newPinTemp=''; document.getElementById('pin-modal-title').textContent='Tidak Cocok — Ulangi'; document.getElementById('pin-modal-sub').textContent='Masukkan PIN baru lagi'; updateMDots(0); } }
+}
+function shakeMDots(){ for(let i=0;i<4;i++) document.getElementById(`modal-dot-${i}`).classList.add('error'); setTimeout(()=>{ pinModalBuffer=''; for(let i=0;i<4;i++) document.getElementById(`modal-dot-${i}`).classList.remove('error'); },600); }
+
+/* ================================================================
+   SYNC STATUS & TOAST
+   ================================================================ */
+function setSyncStatus(s){ const map={idle:{cls:'',t:'Tidak terhubung'},loading:{cls:'loading',t:'Memuat…'},ok:{cls:'ok',t:'Tersinkron'},error:{cls:'error',t:'Gagal sync'}}; const m=map[s]||map.idle; ['mobile-sync-dot','sidebar-sync-dot'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.className='sync-dot'; if(m.cls) el.classList.add(m.cls); } }); ['mobile-sync-text','sidebar-sync-text'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=m.t; }); }
+function showToast(msg,type='default'){ const c=document.getElementById('toast-container'); const el=document.createElement('div'); el.className=`toast-item${type==='success'?' toast-success':type==='danger'?' toast-danger':type==='warning'?' toast-warning':''}`; el.innerHTML=`<span style="flex:1">${msg}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;font-size:1rem">×</button>`; c.appendChild(el); setTimeout(()=>{ el.classList.add('toast-out'); setTimeout(()=>el.remove(),300); },3500); }
+
+/* ================================================================
+   UTILS
+   ================================================================ */
+function updateTodayLabel(){ document.getElementById('today-label').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+function formatDate(iso){ if(!iso)return'—'; try{ return new Date(iso+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}); }catch(_){return iso;} }
+function formatDateShort(iso){ if(!iso)return'—'; try{ return new Date(iso+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'}); }catch(_){return iso;} }
+function fmtD(d){ return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tryJSON(s){ try{ return JSON.parse(s); }catch(_){return{};} }
+function toISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function sameMonth(a,b){ try{ return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth(); }catch(_){return false;} }
+function weekStart(){ const n=new Date(); n.setHours(0,0,0,0); const dow=n.getDay()||7; n.setDate(n.getDate()-(dow-1)); return n; }
+function calcCurrentStreak(records){ if(!records.length)return 0; const dates=new Set(records.map(r=>r.tanggal)); let s=0; const d=new Date(); d.setHours(0,0,0,0); while(dates.has(toISO(d))){ s++; d.setDate(d.getDate()-1); } return s; }
+function calcLongestStreak(records){ if(!records.length)return 0; const dates=[...new Set(records.map(r=>r.tanggal))].sort(); let max=1,cur=1; for(let i=1;i<dates.length;i++){ const diff=(new Date(dates[i]+'T00:00:00')-new Date(dates[i-1]+'T00:00:00'))/86400000; if(diff===1){cur++;max=Math.max(max,cur);}else cur=1; } return dates.length?max:0; }
+</script>
+</body>
+</html>
